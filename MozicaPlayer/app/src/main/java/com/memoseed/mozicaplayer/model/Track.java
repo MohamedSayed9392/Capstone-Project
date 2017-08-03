@@ -1,0 +1,86 @@
+package com.memoseed.mozicaplayer.model;
+
+/**
+ * Created by MohamedSayed on 8/3/2017.
+ */
+
+public class Track {
+    String title,fileName,filePath,albumArt,artist;
+    long listened,duration,added;
+
+    public Track(String title, String fileName, String filePath,String albumArt,String artist, long listened, long duration, long added) {
+        this.title = title;
+        this.fileName = fileName;
+        this.filePath = filePath;
+        this.albumArt = albumArt;
+        this.artist = artist;
+        this.listened = listened;
+        this.duration = duration;
+        this.added = added;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public long getListened() {
+        return listened;
+    }
+
+    public void setListened(long listened) {
+        this.listened = listened;
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    public long getAdded() {
+        return added;
+    }
+
+    public void setAdded(long added) {
+        this.added = added;
+    }
+
+    public String getAlbumArt() {
+        return albumArt;
+    }
+
+
+    public void setAlbumArt(String albumArt) {
+        this.albumArt = albumArt;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+}
