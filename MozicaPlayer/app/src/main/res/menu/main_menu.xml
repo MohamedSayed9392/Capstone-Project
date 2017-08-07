@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/sort_group"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/sort_title"
+            android:title="by Title" />
+        <item
+            android:id="@+id/sort_file_name"
+            android:title="by File name" />
+        <item
+            android:id="@+id/sort_duration"
+            android:title="by Duration" />
+        <item
+            android:id="@+id/sort_listened"
+            android:title="by Most listened" />
+        <item
+            android:id="@+id/sort_added"
+            android:title="by Date added" />
+    </group>
+</menu>

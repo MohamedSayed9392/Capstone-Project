@@ -6,14 +6,15 @@ package com.memoseed.mozicaplayer.model;
 
 public class Track {
     String title,fileName,filePath,albumArt,artist;
-    long listened,duration,added;
+    long id,listened,duration,added;
 
-    public Track(String title, String fileName, String filePath,String albumArt,String artist, long listened, long duration, long added) {
+    public Track(String title, String fileName, String filePath,String albumArt,String artist,long id, long listened, long duration, long added) {
         this.title = title;
         this.fileName = fileName;
         this.filePath = filePath;
         this.albumArt = albumArt;
         this.artist = artist;
+        this.id = id;
         this.listened = listened;
         this.duration = duration;
         this.added = added;
@@ -82,5 +83,13 @@ public class Track {
 
     public void setArtist(String artist) {
         this.artist = artist;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }

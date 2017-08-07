@@ -1,7 +1,9 @@
 package com.memoseed.mozicaplayer.adapters;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,7 +17,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.memoseed.mozicaplayer.R;
+import com.memoseed.mozicaplayer.database.DatabaseHandler;
+import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.model.Track;
+import com.memoseed.mozicaplayer.utils.UTils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -54,15 +59,34 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
     public void onBindViewHolder(final View_Holder holder, final int position) {
         Track track = Tracks.get(position);
 
+        final long[] listened = {UTils.getListenedCount(con, (int) track.getId())};
+
         holder.txtTitle.setText(track.getTitle());
-        holder.txtAdded.setText(formatDATE.format(track.getAdded()));
+        holder.txtAdded.setText(formatDATE.format(new Date(track.getAdded()*1000)));
         holder.txtDuration.setText(new SimpleDateFormat("mm:ss").format(new Date(track.getDuration())));
-        holder.txtListened.setText(String.valueOf(track.getListened()));
+        holder.txtListened.setText(String.valueOf(listened[0]));
 
         holder.linItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Toast.makeText(con,track.getFileName(),Toast.LENGTH_LONG).show();
+
+                Log.d(TAG,"listened : "+listened[0]);
+
+                listened[0]++;
+
+                ContentValues values = new ContentValues();
+                values.put("listened", listened[0]);
+
+                Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_LISTENED_TRACKS);
+                if(listened[0]>1) {
+                    con.getContentResolver().update(contentUri, values, "id = ?", new String[]{String.valueOf(track.getId())});
+                }else{
+                    values.put("id", track.getId());
+                    con.getContentResolver().insert(contentUri, values);
+                }
+
+                notifyItemChanged(position);
             }
         });
 

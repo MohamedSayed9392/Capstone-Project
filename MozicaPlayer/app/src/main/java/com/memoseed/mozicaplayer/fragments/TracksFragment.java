@@ -25,9 +25,14 @@ import android.widget.Toast;
 
 import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.adapters.LibraryRVAdapter;
+import com.memoseed.mozicaplayer.database.DatabaseHandler;
+import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.model.Track;
+import com.memoseed.mozicaplayer.model.TrackListened;
+import com.memoseed.mozicaplayer.utils.UTils;
 
 import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EFragment;
 import org.androidannotations.annotations.ViewById;
@@ -45,7 +50,7 @@ public class TracksFragment extends Fragment {
 
     String TAG = getClass().getSimpleName();
 
-    LibraryRVAdapter libraryRVAdapter;
+    public LibraryRVAdapter libraryRVAdapter;
     public List<Track> list = new ArrayList<>();
 
     public static TracksFragment_ newInstance(int currentTab) {
@@ -60,11 +65,13 @@ public class TracksFragment extends Fragment {
     }
 
     int currentTab;
+    DatabaseHandler databaseHandler;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         currentTab = getArguments().getInt("currentTab");
         Log.d(TAG, "currentTab : " + currentTab);
+        databaseHandler = new DatabaseHandler(mContext);
     }
 
     private Activity mContext;
@@ -99,7 +106,7 @@ public class TracksFragment extends Fragment {
         rView.setLayoutManager(new LinearLayoutManager(mContext));
         rView.setAdapter(libraryRVAdapter);
 
-        getSongList();
+        if(currentTab == 0) getSongList();
 
     }
 
@@ -117,6 +124,7 @@ public class TracksFragment extends Fragment {
 
 
     public void getSongList() {
+
         //retrieve song info
         ContentResolver musicResolver = mContext.getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -130,8 +138,9 @@ public class TracksFragment extends Fragment {
             int filePathColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
       /*      int albumArtColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
             int listenedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);*/
+            int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-            int addedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED);
+            int addedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED);
             //add songs to list
             do {
                 String thisTitle = musicCursor.getString(titleColumn);
@@ -140,18 +149,52 @@ public class TracksFragment extends Fragment {
                 String thisFilePath = "file:///"+musicCursor.getString(filePathColumn);
                /* String thisAlbumArt = musicCursor.getString(fileNameColumn);
                 long listened = musicCursor.getLong(fileNameColumn);*/
+                long id = musicCursor.getLong(idColumn); //  Log.d(TAG,"track_id : "+id);
                 long duration = musicCursor.getLong(durationColumn);
                 long added = musicCursor.getLong(addedColumn);
 
-                list.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,0,duration,added));
+               list.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added));
             }
             while (musicCursor.moveToNext());
         }
 
+        getAllTrackListeneds();
         libraryRVAdapter.notifyDataSetChanged();
 
     }
 
+    List<TrackListened> trackListenedList = new ArrayList<>();
+    @Background
+    public void getAllTrackListeneds() {
+        Log.d(TAG,"getAllTrackListeneds start");
+        Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_LISTENED_TRACKS);
+        Cursor cursor = mContext.getContentResolver().query(contentUri,null, null, null,null);
+
+        List<TrackListened> trackListenedList = new ArrayList<TrackListened>();
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                int KEY_ID = cursor.getColumnIndex("id");
+                int KEY_LISTENED = cursor.getColumnIndex("listened");
+
+                TrackListened trackListened = new TrackListened(cursor.getLong(KEY_ID), cursor.getLong(KEY_LISTENED));
+                // Adding trackListened to list
+                trackListenedList.add(trackListened);
+            } while (cursor.moveToNext());
+        }
+
+        for(int i=0;i<trackListenedList.size();i++){
+            TrackListened trackListened = trackListenedList.get(i);
+            for(int j=0;j<list.size();j++){
+                Track track = list.get(j);
+                if(track.getId()==trackListened.getId()){
+                    track.setListened(trackListened.getListened());
+                    break;
+                }
+            }
+        }
+        Log.d(TAG,"getAllTrackListeneds end");
+    }
 
     private void toast(String s) {
         Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
