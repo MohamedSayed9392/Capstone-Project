@@ -109,4 +109,9 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    public void scrollToPosition(int position,int currentTab){
+        Log.d(TAG,"scrollToPosition("+position+","+currentTab+")");
+        ((TracksFragment_) libraryPagerAdapter.getItem(currentTab)).rView.smoothScrollToPosition(position);
+    }
 }

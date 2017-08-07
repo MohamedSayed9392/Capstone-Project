@@ -98,18 +98,18 @@ public class TracksFragment extends Fragment {
     }
 
 
-    @ViewById RecyclerView rView;
-
+    @ViewById public RecyclerView rView;
+    public LinearLayoutManager linearLayoutManager;
     @AfterViews
     void afterViews(){
-        libraryRVAdapter = new LibraryRVAdapter(mContext,list);
+        libraryRVAdapter = new LibraryRVAdapter(mContext,list,currentTab);
+        linearLayoutManager = new LinearLayoutManager(mContext);
         rView.setLayoutManager(new LinearLayoutManager(mContext));
         rView.setAdapter(libraryRVAdapter);
 
         if(currentTab == 0) getSongList();
 
     }
-
 
 
     @Override
