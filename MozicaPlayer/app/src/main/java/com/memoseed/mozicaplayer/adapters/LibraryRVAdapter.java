@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -18,8 +19,11 @@ import android.widget.Toast;
 
 import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.activities.MainActivity_;
+import com.memoseed.mozicaplayer.activities.PlayerActivity;
+import com.memoseed.mozicaplayer.activities.PlayerActivity_;
 import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
+import com.memoseed.mozicaplayer.fragments.TracksFragment_;
 import com.memoseed.mozicaplayer.model.Track;
 import com.memoseed.mozicaplayer.utils.UTils;
 
@@ -38,6 +42,7 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
     private List<Track> Tracks;
     Context con;
     int currentTab;
+    long currentId;
 
     SimpleDateFormat formatDATE = new SimpleDateFormat("dd/MM/yyyy");
 
@@ -63,6 +68,12 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
     public void onBindViewHolder(final View_Holder holder, final int position) {
         Track track = Tracks.get(position);
 
+        if(((MainActivity_)con).currentTrack!=null && ((MainActivity_)con).currentTrack.getId()==track.getId()){
+            holder.imNowPlaying.setVisibility(View.VISIBLE);
+        }else{
+            holder.imNowPlaying.setVisibility(View.GONE);
+        }
+
         holder.txtTitle.setText(track.getTitle());
         holder.txtAdded.setText(formatDATE.format(new Date(track.getAdded()*1000)));
         holder.txtDuration.setText(new SimpleDateFormat("mm:ss").format(new Date(track.getDuration())));
@@ -71,30 +82,71 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
         holder.linItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(con,track.getFileName(),Toast.LENGTH_LONG).show();
+              //  Toast.makeText(con,track.getFileName(),Toast.LENGTH_LONG).show();
 
-                Log.d(TAG,"listened : "+track.getListened());
+                if(((MainActivity_)con).currentTrack==null || ((MainActivity_)con).currentTrack.getId()!=track.getId()){
+                    currentId = track.getId();
 
-                track.setListened(track.getListened()+1);
+                    Log.d(TAG,"listened : "+track.getListened());
 
-                ContentValues values = new ContentValues();
-                values.put("listened", track.getListened());
+                    track.setListened(track.getListened()+1);
 
-                Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_LISTENED_TRACKS);
-                if(track.getListened()>1) {
-                    con.getContentResolver().update(contentUri, values, "id = ?", new String[]{String.valueOf(track.getId())});
-                }else{
-                    values.put("id", track.getId());
-                    con.getContentResolver().insert(contentUri, values);
+                    ContentValues values = new ContentValues();
+                    values.put("listened", track.getListened());
+
+                    Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_LISTENED_TRACKS);
+                    if(track.getListened()>1) {
+                        con.getContentResolver().update(contentUri, values, "id = ?", new String[]{String.valueOf(track.getId())});
+                    }else{
+                        values.put("id", track.getId());
+                        con.getContentResolver().insert(contentUri, values);
+                    }
+
+                    notifyDataSetChanged();
+
+                    ((MainActivity_)con).currentTrack = track;
                 }
 
-                if(position!=0) {
-                    if (Tracks.get(position - 1).getListened() < track.getListened()) {
-                        swap(position, position-1);
+                con.startActivity(new Intent(con, PlayerActivity_.class));
+
+            }
+        });
+
+        holder.checkFav.setOnCheckedChangeListener(null);
+        if(((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(currentTab)).databaseHandler.isRowExist(DatabaseHandler.TABLE_FAV_TRACKS,track.getId())){
+            holder.checkFav.setChecked(true);
+        }else{
+            holder.checkFav.setChecked(false);
+        }
+
+        holder.checkFav.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if(isChecked){
+                    track.setFav(true);
+                    ContentValues values = new ContentValues();
+                    values.put("id", track.getId());
+
+                    Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_FAV_TRACKS);
+                    Uri resultUri =  con.getContentResolver().insert(contentUri, values);
+                    Log.d(TAG,"Fav : "+resultUri.toString());
+
+                    if(currentTab==0){
+                        ((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(1)).updateList();
+                    }
+                }else{
+                    track.setFav(false);
+                    Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_FAV_TRACKS);
+                    int resultUri =  con.getContentResolver().delete(contentUri, "id = ?", new String[] { String.valueOf(track.getId()) });
+                    Log.d(TAG,"Fav : "+resultUri);
+
+                    if(currentTab==1){
+                        Tracks.remove(track);
+                        notifyDataSetChanged();
+                    }else{
+                        ((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(1)).updateList();
                     }
                 }
-
-                notifyItemChanged(position);
             }
         });
 
@@ -149,11 +201,4 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
         }
     }
 
-
-    public void swap(int firstPosition, int secondPosition)
-    {
-        Collections.swap(Tracks, firstPosition, secondPosition);
-        notifyItemMoved(firstPosition, secondPosition);
-        ((MainActivity_)con).scrollToPosition(secondPosition,currentTab);
-    }
 }

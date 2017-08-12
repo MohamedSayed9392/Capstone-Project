@@ -7,8 +7,10 @@ package com.memoseed.mozicaplayer.model;
 public class Track {
     String title,fileName,filePath,albumArt,artist;
     long id,listened,duration,added;
+    boolean fav = false;
+    long currentTime = 0;
 
-    public Track(String title, String fileName, String filePath,String albumArt,String artist,long id, long listened, long duration, long added) {
+    public Track(String title, String fileName, String filePath,String albumArt,String artist,long id, long listened, long duration, long added,boolean fav) {
         this.title = title;
         this.fileName = fileName;
         this.filePath = filePath;
@@ -18,6 +20,7 @@ public class Track {
         this.listened = listened;
         this.duration = duration;
         this.added = added;
+        this.fav = fav;
     }
 
     public String getTitle() {
@@ -91,5 +94,21 @@ public class Track {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public boolean isFav() {
+        return fav;
+    }
+
+    public void setFav(boolean fav) {
+        this.fav = fav;
+    }
+
+    public long getCurrentTime() {
+        return currentTime;
+    }
+
+    public void setCurrentTime(long currentTime) {
+        this.currentTime = currentTime;
     }
 }

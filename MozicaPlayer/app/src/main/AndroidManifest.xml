@@ -12,17 +12,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <provider
+            android:name=".database.TracksContentProvider"
+            android:authorities="tracksContentProvider" />
 
-        <provider android:authorities="tracksContentProvider"
-            android:name=".database.TracksContentProvider"/>
-
-        <activity android:name=".activities.MainActivity_"
+        <activity
+            android:name=".activities.MainActivity_"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activities.PlayerActivity_"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".activities.MainActivity_"></activity>
     </application>
 
 </manifest>
