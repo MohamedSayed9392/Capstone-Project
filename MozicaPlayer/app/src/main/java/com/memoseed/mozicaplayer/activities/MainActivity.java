@@ -76,8 +76,14 @@ public class MainActivity extends AppCompatActivity {
                 for(int i=0;i<Music.allTracks.size();i++){
                     Track track1 = Music.allTracks.get(i);
                     if(track1.getId() == Music.currentTrack.getId()){
-                        /*int pos = i;
-                        if(i!=0) pos = i-1;*/
+                        ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
+                        break;
+                    }
+                }
+            }else{
+                for(int i=0;i<Music.allTracks.size();i++){
+                    Track track1 = Music.allTracks.get(i);
+                    if(track1.getId() == Music.currentTrack.getId()){
                         ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
                         break;
                     }

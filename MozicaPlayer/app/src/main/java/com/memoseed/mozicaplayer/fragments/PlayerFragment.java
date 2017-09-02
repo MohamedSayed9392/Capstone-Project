@@ -27,6 +27,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -351,6 +355,24 @@ public class PlayerFragment extends Fragment {
         ((TracksFragment_)MainActivity.getInstance().libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
 
         Music.playTrack(mContext,Music.currentTrack.getFilePath());
+
+        checkPlay.setChecked(true);
+    }
+
+    public void updateCoverArt(String imageUrl){
+        Glide.with(mContext).load(imageUrl).listener(new RequestListener<String, GlideDrawable>() {
+            @Override
+            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                progressBar.setVisibility(View.GONE);
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                progressBar.setVisibility(View.GONE);
+                return false;
+            }
+        }).into(imAlbumArt);
     }
 
     private void toast(String s) {

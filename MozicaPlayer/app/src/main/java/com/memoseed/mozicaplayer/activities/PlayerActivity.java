@@ -16,17 +16,33 @@ import org.androidannotations.annotations.EActivity;
 @EActivity(R.layout.activity_player)
 public class PlayerActivity extends AppCompatActivity {
 
+    static PlayerActivity playerActivity;
+    public static PlayerActivity getInstance() {
+        return playerActivity;
+    }
+
+    public PlayerFragment_ playerFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this));
 
-        PlayerFragment_ playerFragment = new PlayerFragment_();
+        playerActivity = this;
+
+        playerFragment = new PlayerFragment_();
        // playerFragment.setHasOptionsMenu(true);
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragmentFrame, playerFragment);
         fragmentTransaction.commit();
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        playerActivity = null;
     }
 }
