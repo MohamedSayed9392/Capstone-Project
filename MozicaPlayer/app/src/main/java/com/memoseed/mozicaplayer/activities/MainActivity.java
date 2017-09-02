@@ -17,9 +17,11 @@ import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.adapters.LibraryPagerAdapter;
 import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
+import com.memoseed.mozicaplayer.debugSystem.ExceptionHandler;
 import com.memoseed.mozicaplayer.fragments.TracksFragment_;
 import com.memoseed.mozicaplayer.model.Track;
 import com.memoseed.mozicaplayer.model.TrackListened;
+import com.memoseed.mozicaplayer.utils.Music;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Background;
@@ -37,9 +39,6 @@ public class MainActivity extends AppCompatActivity {
     public LibraryPagerAdapter libraryPagerAdapter;
     String TAG = getClass().getSimpleName();
 
-    public Track currentTrack;
-
-
     static MainActivity mainActivity;
     public static MainActivity getInstance() {
         return mainActivity;
@@ -48,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this));
+
         mainActivity = this;
         getSongList();
         libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(),2);
@@ -65,15 +67,15 @@ public class MainActivity extends AppCompatActivity {
         try {
             if (oldOptionItemSelectedid == R.id.sort_listened) {
                 if(!descending){
-                    Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
                 }else{
-                    Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w2.getListened()).compareTo(w1.getListened()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w2.getListened()).compareTo(w1.getListened()));
                 }
 
                 ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
-                for(int i=0;i<((TracksFragment_)libraryPagerAdapter.getItem(0)).list.size();i++){
-                    Track track1 = ((TracksFragment_)libraryPagerAdapter.getItem(0)).list.get(i);
-                    if(track1.getId() == currentTrack.getId()){
+                for(int i=0;i<Music.allTracks.size();i++){
+                    Track track1 = Music.allTracks.get(i);
+                    if(track1.getId() == Music.currentTrack.getId()){
                         /*int pos = i;
                         if(i!=0) pos = i-1;*/
                         ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
@@ -93,10 +95,11 @@ public class MainActivity extends AppCompatActivity {
     void afterViews(){
         viewPager.setAdapter(libraryPagerAdapter);
     }
-
-
-    public List<Track> list = new ArrayList<>();
+    
     public void getSongList() {
+
+        Music.allTracks.clear();
+        Music.favTracks.clear();
 
         //retrieve song info
         ContentResolver musicResolver = getContentResolver();
@@ -126,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 long duration = musicCursor.getLong(durationColumn);
                 long added = musicCursor.getLong(addedColumn);
 
-                list.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added,false));
+                Music.allTracks.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added,false));
             }
             while (musicCursor.moveToNext());
         }
@@ -157,8 +160,8 @@ public class MainActivity extends AppCompatActivity {
 
         for(int i=0;i<trackListenedList.size();i++){
             TrackListened trackListened = trackListenedList.get(i);
-            for(int j=0;j<list.size();j++){
-                Track track = list.get(j);
+            for(int j=0;j<Music.allTracks.size();j++){
+                Track track = Music.allTracks.get(j);
                 if(track.getId()==trackListened.getId()){
                     track.setListened(trackListened.getListened());
                     break;
@@ -186,10 +189,11 @@ public class MainActivity extends AppCompatActivity {
 
         for(int i=0;i<trackFavList.size();i++){
             long fav = trackFavList.get(i);
-            for(int j=0;j<list.size();j++){
-                Track track = list.get(j);
+            for(int j=0;j<Music.allTracks.size();j++){
+                Track track = Music.allTracks.get(j);
                 if(track.getId()==fav){
                     track.setFav(true);
+                    Music.favTracks.add(track);
                     break;
                 }
             }
@@ -215,14 +219,14 @@ public class MainActivity extends AppCompatActivity {
             case R.id.sort_file_name:
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
-                    Collections.sort(((TracksFragment_) libraryPagerAdapter.getItem(0)).list, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
                 }else{
                     if(descending){
                         descending = false;
-                        Collections.sort(((TracksFragment_) libraryPagerAdapter.getItem(0)).list, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
+                        Collections.sort(Music.allTracks, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
                     }else{
                         descending = true;
-                        Collections.reverse(((TracksFragment_)libraryPagerAdapter.getItem(0)).list);
+                        Collections.reverse(Music.allTracks);
                     }
                 }
                 ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
@@ -230,14 +234,14 @@ public class MainActivity extends AppCompatActivity {
             case R.id.sort_title:
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
-                    Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
                 }else{
                     if(descending){
                         descending = false;
-                        Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
+                        Collections.sort(Music.allTracks, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
                     }else{
                         descending = true;
-                        Collections.reverse(((TracksFragment_)libraryPagerAdapter.getItem(0)).list);
+                        Collections.reverse(Music.allTracks);
                     }
                 }
                 ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
@@ -245,14 +249,14 @@ public class MainActivity extends AppCompatActivity {
             case R.id.sort_duration:
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
-                    Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
                 }else{
                     if(descending){
                         descending = false;
-                        Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
+                        Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
                     }else{
                         descending = true;
-                        Collections.reverse(((TracksFragment_)libraryPagerAdapter.getItem(0)).list);
+                        Collections.reverse(Music.allTracks);
                     }
                 }
                 ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
@@ -260,14 +264,14 @@ public class MainActivity extends AppCompatActivity {
             case R.id.sort_added:
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
-                    Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
                 }else{
                     if(descending){
                         descending = false;
-                        Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
+                        Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
                     }else{
                         descending = true;
-                        Collections.reverse(((TracksFragment_)libraryPagerAdapter.getItem(0)).list);
+                        Collections.reverse(Music.allTracks);
                     }
                 }
                 ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
@@ -276,14 +280,14 @@ public class MainActivity extends AppCompatActivity {
 
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
-                    Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
+                    Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
                 }else{
                     if(descending){
                         descending = false;
-                        Collections.sort(((TracksFragment_)libraryPagerAdapter.getItem(0)).list, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
+                        Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
                     }else{
                         descending = true;
-                        Collections.reverse(((TracksFragment_)libraryPagerAdapter.getItem(0)).list);
+                        Collections.reverse(Music.allTracks);
                     }
                 }
                 ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();

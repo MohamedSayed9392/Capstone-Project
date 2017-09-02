@@ -60,6 +60,10 @@ buildscript {
 repositories {
     mavenCentral()
     mavenLocal()
+    jcenter()
+    maven {
+        url "https://maven.google.com"
+    }
 }
 
 apt {
@@ -76,9 +80,13 @@ dependencies {
 
 
     compile 'org.androidannotations:androidannotations-api:4.2.0'
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:appcompat-v7:25.4.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.android.support:recyclerview-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.4.0'
     testCompile 'junit:junit:4.12'
     apt 'org.androidannotations:androidannotations:4.2.0'
+
+    compile 'com.google.android.gms:play-services-analytics:11.0.2'
+
+    compile 'com.google.android.exoplayer:exoplayer:r2.5.1'
 }

@@ -25,6 +25,7 @@ import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.fragments.TracksFragment_;
 import com.memoseed.mozicaplayer.model.Track;
+import com.memoseed.mozicaplayer.utils.Music;
 import com.memoseed.mozicaplayer.utils.UTils;
 
 import java.text.SimpleDateFormat;
@@ -46,8 +47,9 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
 
     SimpleDateFormat formatDATE = new SimpleDateFormat("dd/MM/yyyy");
 
-    public LibraryRVAdapter(Context con, List<Track> Tracks,int currentTab) {
-        this.Tracks = Tracks;
+    public LibraryRVAdapter(Context con,int currentTab) {
+        if(currentTab==0)this.Tracks = Music.allTracks;
+        else if(currentTab==1)this.Tracks = Music.favTracks;
         this.con = con;
         formatDATE.setTimeZone(TimeZone.getDefault());
         this.currentTab = currentTab;
@@ -68,7 +70,7 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
     public void onBindViewHolder(final View_Holder holder, final int position) {
         Track track = Tracks.get(position);
 
-        if(((MainActivity_)con).currentTrack!=null && ((MainActivity_)con).currentTrack.getId()==track.getId()){
+        if(Music.currentTrack!=null && Music.currentTrack.getId()==track.getId()){
             holder.imNowPlaying.setVisibility(View.VISIBLE);
         }else{
             holder.imNowPlaying.setVisibility(View.GONE);
@@ -84,7 +86,10 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
             public void onClick(View view) {
               //  Toast.makeText(con,track.getFileName(),Toast.LENGTH_LONG).show();
 
-                if(((MainActivity_)con).currentTrack==null || ((MainActivity_)con).currentTrack.getId()!=track.getId()){
+                if(currentTab==0) Music.currentList="allTracks";
+                else if(currentTab==1)Music.currentList="favTracks";
+
+                if(Music.currentTrack==null || Music.currentTrack.getId()!=track.getId()){
                     currentId = track.getId();
 
                     Log.d(TAG,"listened : "+track.getListened());
@@ -104,7 +109,11 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
 
                     notifyDataSetChanged();
 
-                    ((MainActivity_)con).currentTrack = track;
+                    if(Music.currentTrack!=null){
+                        Music.stopPlayer();
+                    }
+
+                    Music.currentTrack = track;
                 }
 
                 con.startActivity(new Intent(con, PlayerActivity_.class));
@@ -124,6 +133,7 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if(isChecked){
                     track.setFav(true);
+                    Music.favTracks.add(track);
                     ContentValues values = new ContentValues();
                     values.put("id", track.getId());
 
@@ -132,7 +142,7 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
                     Log.d(TAG,"Fav : "+resultUri.toString());
 
                     if(currentTab==0){
-                        ((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(1)).updateList();
+                        ((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(1)).libraryRVAdapter.notifyDataSetChanged();
                     }
                 }else{
                     track.setFav(false);
@@ -144,7 +154,10 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
                         Tracks.remove(track);
                         notifyDataSetChanged();
                     }else{
-                        ((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(1)).updateList();
+                        for(int i=0;i<Music.favTracks.size();i++){
+                            if(Music.favTracks.get(i).getId()==track.getId())  Music.favTracks.remove(track);
+                        }
+                        ((TracksFragment_)((MainActivity_)con).libraryPagerAdapter.getItem(1)).libraryRVAdapter.notifyDataSetChanged();
                     }
                 }
             }

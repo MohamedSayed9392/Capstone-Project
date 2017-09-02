@@ -7,7 +7,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.memoseed.mozicaplayer.R;
+import com.memoseed.mozicaplayer.debugSystem.ExceptionHandler;
 import com.memoseed.mozicaplayer.fragments.PlayerFragment_;
+import com.memoseed.mozicaplayer.utils.Music;
 
 import org.androidannotations.annotations.EActivity;
 
@@ -18,7 +20,9 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Fragment playerFragment = new PlayerFragment_();
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this));
+
+        PlayerFragment_ playerFragment = new PlayerFragment_();
        // playerFragment.setHasOptionsMenu(true);
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();

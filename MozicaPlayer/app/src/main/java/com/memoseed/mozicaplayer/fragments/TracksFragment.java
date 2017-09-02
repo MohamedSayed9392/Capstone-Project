@@ -30,6 +30,7 @@ import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.model.Track;
 import com.memoseed.mozicaplayer.model.TrackListened;
+import com.memoseed.mozicaplayer.utils.Music;
 import com.memoseed.mozicaplayer.utils.UTils;
 
 import org.androidannotations.annotations.AfterViews;
@@ -53,7 +54,6 @@ public class TracksFragment extends Fragment {
     String TAG = getClass().getSimpleName();
 
     public LibraryRVAdapter libraryRVAdapter;
-    public List<Track> list = new ArrayList<>();
 
     public static TracksFragment_ newInstance(int currentTab) {
         TracksFragment_ tracksFragment = new TracksFragment_();
@@ -107,11 +107,10 @@ public class TracksFragment extends Fragment {
 
     @AfterViews
     void afterViews() {
-        libraryRVAdapter = new LibraryRVAdapter(mContext, list, currentTab);
+        libraryRVAdapter = new LibraryRVAdapter(mContext,currentTab);
         linearLayoutManager = new LinearLayoutManager(mContext);
         rView.setLayoutManager(new LinearLayoutManager(mContext));
         rView.setAdapter(libraryRVAdapter);
-        updateList();
     }
 
 
@@ -125,19 +124,6 @@ public class TracksFragment extends Fragment {
         super.onDestroy();
     }
 
-
-    @UiThread
-    public void updateList() {
-            list.clear();
-            if (currentTab == 0) {
-                list.addAll(((MainActivity_) mContext).list);
-            } else if (currentTab == 1) {
-                for (Track track : ((MainActivity_) mContext).list) {
-                    if (track.isFav()) list.add(track);
-                }
-            }
-            libraryRVAdapter.notifyDataSetChanged();
-    }
 
     private void toast(String s) {
         Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
