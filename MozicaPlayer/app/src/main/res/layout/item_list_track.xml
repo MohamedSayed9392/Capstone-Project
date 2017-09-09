@@ -62,7 +62,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginRight="5dp"
-                    android:text="Duration"
+                    android:text="@string/duration"
                     android:textColor="@android:color/black"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -90,7 +90,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginRight="5dp"
-                    android:text="Listened"
+                    android:text="@string/listened"
                     android:textColor="@android:color/black"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -118,7 +118,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginRight="5dp"
-                    android:text="Added"
+                    android:text="@string/added"
                     android:textColor="@android:color/black"
                     android:textSize="12sp"
                     android:textStyle="bold" />

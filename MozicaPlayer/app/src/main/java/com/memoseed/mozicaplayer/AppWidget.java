@@ -18,6 +18,14 @@ import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
+import com.memoseed.mozicaplayer.MusicNotification.MusicNotificationConstants;
+import com.memoseed.mozicaplayer.activities.MainActivity_;
+import com.memoseed.mozicaplayer.activities.PlayerActivity;
+import com.memoseed.mozicaplayer.activities.PlayerActivity_;
+import com.memoseed.mozicaplayer.model.Track;
+import com.memoseed.mozicaplayer.utils.Music;
+import com.memoseed.mozicaplayer.utils.UTils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,78 +33,116 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 /**
- * Created by Omnya on 3/13/2017.
+ * Created by MohamedSayed on 9/9/2017.
  */
 
 
-public class AppWidget{ /*extends AppWidgetProvider {
+public class AppWidget extends AppWidgetProvider {
 
-    RemoteViews views;
-    ImageView imPrev,imNext,imData;
-
-    int widget_recipe = 0;
-    List<RecipeModel> recipeModels = new ArrayList<>();
-    AppParameters p;
     String TAG = getClass().getSimpleName();
-
-
-
-
-
     Context cont;
     public static final String WIDGET_IDS_KEY ="AppWidget";
-    public static final String WIDGET_IM_NEXT ="AppWidget_imNext";
-    public static final String WIDGET_IM_PREV ="AppWidget_imPrev";
+    public String currentAction = MusicNotificationConstants.ACTION.STARTFOREGROUND_ACTION;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG,"intent action : "+intent.getAction());
-        p = new AppParameters(context);
-        widget_recipe = p.getInt("widget_recipe",0);
-        recipeModels = UTils.getAllRecipeModels(context);
         if (intent.hasExtra(WIDGET_IDS_KEY)) {
             int[] ids = intent.getExtras().getIntArray(WIDGET_IDS_KEY);
-            this.onUpdate(context, AppWidgetManager.getInstance(context), ids);
+            onUpdate(context, AppWidgetManager.getInstance(context), ids);
         } else {
-            if(intent.getAction().matches(WIDGET_IM_NEXT)){
-                Log.d(TAG,"intent.getAction().matches(WIDGET_IM_NEXT)");
-                if(widget_recipe<recipeModels.size()-1){
-                    Log.d(TAG,"widget_recipe<recipeModels.size()-1");
-                    widget_recipe++;
-                    p.setInt(widget_recipe,"widget_recipe");
-                    updateWidgetRecipe(context);
-                }else{
-                    Log.d(TAG,"widget_recipe>recipeModels.size()-1");
-                    Log.d(TAG,"list size : "+recipeModels.size());
+            if(intent.getAction()!=null) {
+                if (intent.getAction().equals(MusicNotificationConstants.ACTION.STARTFOREGROUND_ACTION)) {
+                    UTils.updateWidget(context);
+                } else if (intent.getAction().equals(MusicNotificationConstants.ACTION.PREV_ACTION)) {
+                    Track track = null;
+
+                    if (Music.currentList.matches("favTracks")) {
+                        for (int i = 0; i < Music.favTracks.size(); i++) {
+                            if (Music.favTracks.get(i).getId() == Music.currentTrack.getId()) {
+                                if (i != 0) {
+                                    track = Music.favTracks.get(i - 1);
+                                } else {
+                                    track = Music.favTracks.get(Music.allTracks.size() - 1);
+                                }
+                                break;
+                            }
+                        }
+                    } else if (Music.currentList.matches("allTracks")) {
+                        for (int i = 0; i < Music.allTracks.size(); i++) {
+                            if (Music.allTracks.get(i).getId() == Music.currentTrack.getId()) {
+                                if (i != 0) {
+                                    track = Music.allTracks.get(i - 1);
+                                } else {
+                                    track = Music.allTracks.get(Music.allTracks.size() - 1);
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    Music.currentTrack = track;
+                    Music.playTrack(context, track.getFilePath());
+                    Log.i(TAG, "Clicked Previous");
+                    UTils.updateWidget(context);
+                } else if (intent.getAction().equals(MusicNotificationConstants.ACTION.PLAY_ACTION)) {
+                    Log.i(TAG, "Clicked Play");
+                    try {
+                        Music.exoPlayer.setPlayWhenReady(true);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    UTils.updateWidget(context);
+                } else if (intent.getAction().equals(MusicNotificationConstants.ACTION.PAUSE_ACTION)) {
+                    Log.i(TAG, "Clicked Pause");
+                    try {
+                        Music.exoPlayer.setPlayWhenReady(false);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    UTils.updateWidget(context);
+                } else if (intent.getAction().equals(MusicNotificationConstants.ACTION.NEXT_ACTION)) {
+                    Track track = null;
+
+                    if (Music.currentList.matches("favTracks")) {
+                        for (int i = 0; i < Music.favTracks.size(); i++) {
+                            if (Music.favTracks.get(i).getId() == Music.currentTrack.getId()) {
+                                if (i != (Music.favTracks.size() - 1)) {
+                                    track = Music.favTracks.get(i + 1);
+                                } else {
+                                    track = Music.favTracks.get(0);
+                                }
+                                break;
+                            }
+                        }
+                    } else if (Music.currentList.matches("allTracks")) {
+                        for (int i = 0; i < Music.allTracks.size(); i++) {
+                            if (Music.allTracks.get(i).getId() == Music.currentTrack.getId()) {
+                                if (i != (Music.allTracks.size() - 1)) {
+                                    track = Music.allTracks.get(i + 1);
+                                } else {
+                                    track = Music.allTracks.get(0);
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    Music.currentTrack = track;
+                    Music.playTrack(context, track.getFilePath());
+                    UTils.updateWidget(context);
                 }
-            }else if(intent.getAction().matches(WIDGET_IM_PREV)){
-                Log.d(TAG,"intent.getAction().matches(WIDGET_IM_PREV)");
-                if(widget_recipe>0){
-                    Log.d(TAG,"widget_recipe>0");
-                    widget_recipe--;
-                    p.setInt(widget_recipe,"widget_recipe");
-                    updateWidgetRecipe(context);
-                }else{
-                    Log.d(TAG,"widget_recipe<0");
-                }
-            }else {
+            } else {
                 super.onReceive(context, intent);
             }
-            Log.d(TAG,"widget_recipe : "+widget_recipe);
         }
     }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         cont = context;
-        p = new AppParameters(context);
-        widget_recipe = p.getInt("widget_recipe",0);
-        recipeModels = UTils.getAllRecipeModels(context);
-        // There may be multiple widgets active, so update all of them
-        final int N = appWidgetIds.length;
-        for (int i = 0; i < N; i++) {
-            updateAppWidget(context, appWidgetManager, appWidgetIds[i]);
-        }
+        appWidgetManager.updateAppWidget(appWidgetIds[0], updateUi());
+
     }
 
 
@@ -110,105 +156,61 @@ public class AppWidget{ /*extends AppWidgetProvider {
         // Enter relevant functionality for when the last widget is disabled
     }
 
-    void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
-        Log.d(TAG,"updateAppWidget");
-        views = new RemoteViews(context.getPackageName(), R.layout.app_widget);
-        rowView = ((LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.app_widget_image, null);
-
-        views.setImageViewResource(R.id.imPrev,R.drawable.arrow_left);
-        views.setImageViewResource(R.id.imNext,R.drawable.arrow_right);
-
-        RecipeModel recipeModel = UTils.getAllRecipeModels(context).get(p.getInt("widget_recipe",0));
-
-       views.setImageViewBitmap(R.id.imData,getData(recipeModel));
 
 
-        if(widget_recipe == 0){
-            views.setViewVisibility(R.id.imPrev,GONE);
-            views.setViewVisibility(R.id.imNext,VISIBLE);
-        }else if(widget_recipe == (recipeModels.size()-1)){
-            views.setViewVisibility(R.id.imNext,GONE);
-            views.setViewVisibility(R.id.imPrev,VISIBLE);
+    private RemoteViews updateUi() {
+        // Using RemoteViews to bind custom layouts into Notification
+        RemoteViews views = new RemoteViews(cont.getPackageName(), R.layout.music_player_notification);
+
+        // showing default album image
+        views.setViewVisibility(R.id.status_bar_icon, View.VISIBLE);
+        views.setViewVisibility(R.id.status_bar_album_art, View.GONE);
+        views.setViewVisibility(R.id.status_bar_next, View.VISIBLE);
+        views.setViewVisibility(R.id.status_bar_prev, View.VISIBLE);
+
+        if(Music.currentTrack==null){
+            views.setViewVisibility(R.id.txtNoTrack, View.VISIBLE);
         }else{
-            views.setViewVisibility(R.id.imNext,VISIBLE);
-            views.setViewVisibility(R.id.imPrev,VISIBLE);
-        }
-        views.setOnClickPendingIntent(R.id.imPrev, getPendingSelfIntent(context,WIDGET_IM_PREV));
-        views.setOnClickPendingIntent(R.id.imNext, getPendingSelfIntent(context,WIDGET_IM_NEXT));
-
-        appWidgetManager.updateAppWidget(appWidgetId, views);
-
-    }
-
-    View rowView;
-    private Bitmap getData(RecipeModel recipeModel) {
-
-        List<RecipeIngrediantModel> recipeIngrediantModelList = UTils.getAllRecipeIngrediantModels(cont,recipeModel.getId());
-
-        TextView txtTitle = (TextView)rowView.findViewById(R.id.txtTitle);
-        LinearLayout linIngredients = (LinearLayout)rowView.findViewById(R.id.linIngredients);
-
-        txtTitle.setText(recipeModel.getName());
-        for(RecipeIngrediantModel recipeIngrediantModel:recipeIngrediantModelList){
-            linIngredients.addView(ingredientView(recipeIngrediantModel));
+            views.setTextViewText(R.id.status_bar_track_name, Music.currentTrack.getTitle());
+            views.setTextViewText(R.id.status_bar_track_artist, Music.currentTrack.getArtist());
+            views.setViewVisibility(R.id.txtNoTrack, View.GONE);
         }
 
-        DisplayMetrics metrics = new DisplayMetrics();
-        ((WindowManager) cont.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
-       rowView.layout(0,0,*//*UTils.convertDpToPixel(200,cont)*//* (int) metrics.widthPixels, (int) metrics.heightPixels);
-       //  rowView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        //Get the dimensions of the view so we can re-layout the view at its current size
-        //and create a bitmap of the same size
-        int width = rowView.getWidth();
-        int height = rowView.getHeight();
+        Intent previousIntent = new Intent(cont, getClass());
+        previousIntent.setAction(MusicNotificationConstants.ACTION.PREV_ACTION);
+        PendingIntent ppreviousIntent = PendingIntent.getBroadcast(cont, 0, previousIntent, 0);
 
-        int measuredWidth = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
-        int measuredHeight = View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
+        Intent playIntent = new Intent(cont, getClass());
+        playIntent.setAction(MusicNotificationConstants.ACTION.PLAY_ACTION);
+        PendingIntent pplayIntent = PendingIntent.getBroadcast(cont, 0, playIntent, 0);
 
-        //Cause the view to re-layout
-        rowView.measure(measuredWidth, measuredHeight);
-        rowView.layout(0, 0, rowView.getMeasuredWidth(), rowView.getMeasuredHeight());
+        Intent pauseIntent = new Intent(cont, getClass());
+        pauseIntent.setAction(MusicNotificationConstants.ACTION.PAUSE_ACTION);
+        PendingIntent ppauseIntent = PendingIntent.getBroadcast(cont, 0, pauseIntent, 0);
 
-        //Create a bitmap backed Canvas to draw the view into
-        Bitmap b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
+        Intent nextIntent = new Intent(cont, getClass());
+        nextIntent.setAction(MusicNotificationConstants.ACTION.NEXT_ACTION);
+        PendingIntent pnextIntent = PendingIntent.getBroadcast(cont, 0, nextIntent, 0);
 
-        //Now that the view is laid out and we have a canvas, ask the view to draw itself into the canvas
-        rowView.draw(c);
+        views.setOnClickPendingIntent(R.id.status_bar_next, pnextIntent);
+        views.setOnClickPendingIntent(R.id.status_bar_prev, ppreviousIntent);
 
-        return b;
+        if(Music.exoPlayer!=null && !Music.exoPlayer.getPlayWhenReady()){
+            views.setImageViewResource(R.id.status_bar_play, R.drawable.apollo_holo_dark_play);
+            views.setOnClickPendingIntent(R.id.status_bar_play, pplayIntent);
+        }else if(Music.exoPlayer!=null && Music.exoPlayer.getPlayWhenReady()){
+            views.setImageViewResource(R.id.status_bar_play, R.drawable.apollo_holo_dark_pause);
+            views.setOnClickPendingIntent(R.id.status_bar_play, ppauseIntent);
+        }
 
-    }
-
-    public View ingredientView(RecipeIngrediantModel ingrediantModel) {
-        View rowwView = ((LayoutInflater) cont.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.list_item_recipe_ingredient, null);
-
-        TextView txtIngredient = (TextView) rowwView.findViewById(R.id.txtIngredient);
-        TextView txtQuantity = (TextView) rowwView.findViewById(R.id.txtQuantity);
-        TextView txtMeasure = (TextView) rowwView.findViewById(R.id.txtMeasure);
-
-        txtIngredient.setText(ingrediantModel.getIngredient());
-        txtQuantity.setText(String .valueOf(ingrediantModel.getQuantity()));
-        txtMeasure.setText(ingrediantModel.getMeasure());
-
-        return rowwView;
-    }
-
-
-    public void updateWidgetRecipe(Context context) {
-
-        AppWidgetManager man = AppWidgetManager.getInstance(context);
-        int[] ids = man.getAppWidgetIds(new ComponentName(context, AppWidget.class));
-        Intent updateIntent = new Intent();
-        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        updateIntent.putExtra(AppWidget.WIDGET_IDS_KEY, ids);
-        context.sendBroadcast(updateIntent);
+        return views;
     }
 
     protected PendingIntent getPendingSelfIntent(Context context, String action) {
         Intent intent = new Intent(context, getClass());
         intent.setAction(action);
         return PendingIntent.getBroadcast(context, 0, intent, 0);
-    }*/
+    }
+
 
 }

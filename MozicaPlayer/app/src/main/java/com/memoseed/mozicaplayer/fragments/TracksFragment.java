@@ -23,6 +23,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.memoseed.mozicaplayer.AppParameters;
 import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.activities.MainActivity_;
 import com.memoseed.mozicaplayer.adapters.LibraryRVAdapter;
@@ -111,6 +112,7 @@ public class TracksFragment extends Fragment {
         linearLayoutManager = new LinearLayoutManager(mContext);
         rView.setLayoutManager(new LinearLayoutManager(mContext));
         rView.setAdapter(libraryRVAdapter);
+        ((MainActivity_)mContext).sortTracks(new AppParameters(mContext).getInt("default_sort",R.id.sort_title));
     }
 
 

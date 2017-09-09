@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Mozica Player</string>
+    <string name="duration">Duration</string>
+    <string name="listened">Listened</string>
+    <string name="added">Added</string>
+    <string name="all">All</string>
+    <string name="favourites">Favourites</string>
 </resources>

@@ -12,6 +12,8 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.memoseed.mozicaplayer.MusicNotification.MusicNotificationService;
+import com.memoseed.mozicaplayer.activities.PlayerActivity;
 import com.memoseed.mozicaplayer.model.Track;
 
 import java.util.ArrayList;
@@ -47,6 +49,7 @@ public class Music {
         MediaSource audioSource = new ExtractorMediaSource(trackUri, dataSourceFactory, extractor, null, null);
         exoPlayer.prepare(audioSource);
         exoPlayer.setPlayWhenReady(true);
+        UTils.updateWidget(context);
     }
 
     public static void stopPlayer(){

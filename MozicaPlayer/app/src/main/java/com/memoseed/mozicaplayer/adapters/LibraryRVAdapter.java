@@ -17,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.activities.MainActivity_;
 import com.memoseed.mozicaplayer.activities.PlayerActivity;
@@ -80,6 +81,7 @@ public class LibraryRVAdapter extends RecyclerView.Adapter<LibraryRVAdapter.View
         holder.txtAdded.setText(formatDATE.format(new Date(track.getAdded()*1000)));
         holder.txtDuration.setText(new SimpleDateFormat("mm:ss").format(new Date(track.getDuration())));
         holder.txtListened.setText(String.valueOf(track.getListened()));
+        Glide.with(con).load(track.getAlbumArt()).error(R.drawable.track_album_art).into(holder.imAlbumArt);
 
         holder.linItem.setOnClickListener(new View.OnClickListener() {
             @Override

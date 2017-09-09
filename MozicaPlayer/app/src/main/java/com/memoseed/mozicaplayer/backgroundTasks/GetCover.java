@@ -1,10 +1,13 @@
 package com.memoseed.mozicaplayer.backgroundTasks;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.memoseed.mozicaplayer.activities.MainActivity;
 import com.memoseed.mozicaplayer.activities.PlayerActivity;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -12,6 +15,8 @@ import org.json.JSONObject;
  */
 
 public class GetCover extends AsyncTask<String, String, JSONObject > {
+
+    String TAG = getClass().getSimpleName();
 
         @Override
         protected void onPreExecute() {
@@ -23,15 +28,28 @@ public class GetCover extends AsyncTask<String, String, JSONObject > {
             JSONParser jParser = new JSONParser();
 
             // Getting JSON from URL
-            JSONObject json = jParser.getJSONFromUrl(args[0]);
+            JSONObject json = jParser.getJSONFromUrl("http://coverartarchive.org/release/"+args[0]);
 
             return json;
         }
 
         @Override
         protected void onPostExecute(JSONObject json) {
-           // MainActivity.getInstance().libraryPagerAdapter.getItem()
-            PlayerActivity.getInstance().playerFragment.updateCoverArt();
+            String image = "";
+            try {
+                Log.d(TAG,"json - "+json.toString());
+                JSONArray images = json.getJSONArray("images");
+                Log.d(TAG,"images length - "+images.length());
+                if(images.length()>0) {
+                    Log.d(TAG,"images.getJSONObject(0) - "+images.getJSONObject(0).toString());
+                    image = images.getJSONObject(0).getString("image");
+                    Log.d(TAG,"image - "+image);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG,"image - "+image);
+            if(PlayerActivity.getInstance()!=null) PlayerActivity.getInstance().playerFragment.updateCoverArt(image);
         }
 
 }

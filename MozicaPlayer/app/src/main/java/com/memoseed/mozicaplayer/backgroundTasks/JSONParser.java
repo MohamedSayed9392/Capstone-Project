@@ -5,8 +5,10 @@ import android.util.Log;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpProtocolParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,6 +28,8 @@ public class JSONParser {
     static JSONObject jObj = null;
     static String json = "";
 
+    String TAG = getClass().getSimpleName();
+
     // constructor
     public JSONParser() {
 
@@ -37,9 +41,18 @@ public class JSONParser {
         try {
             // defaultHttpClient
             DefaultHttpClient httpClient = new DefaultHttpClient();
-            HttpPost httpPost = new HttpPost(url);
+            HttpProtocolParams.setUserAgent(httpClient.getParams(), "MozicaPlayer/1.0.0 ( memohamaki@gmail.com )");
+            Log.d(TAG,"url - 0 - "+url);
+            url = url.replace("<unknown>","").replaceAll("\\s+$", "").replace(" ","%20");
+            Log.d(TAG,"url - 1 - "+url);
+            Log.d(TAG,"url - 2 - "+url.substring(url.length() - 3));
+            if(url.substring(url.length() - 3).matches("%20")){
+                url = url.substring(0, url.length() - 3);
+                Log.d(TAG,"url - 3 - "+url);
+            }
+            HttpGet httpGet = new HttpGet(url);
 
-            HttpResponse httpResponse = httpClient.execute(httpPost);
+            HttpResponse httpResponse = httpClient.execute(httpGet);
             HttpEntity httpEntity = httpResponse.getEntity();
             is = httpEntity.getContent();
 
@@ -61,6 +74,8 @@ public class JSONParser {
             }
             is.close();
             json = sb.toString();
+            Log.d(TAG,url+" - "+json);
+
         } catch (Exception e) {
             Log.e("Buffer Error", "Error converting result " + e.toString());
         }

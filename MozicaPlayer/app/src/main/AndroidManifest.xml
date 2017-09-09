@@ -16,9 +16,24 @@
             android:name=".database.TracksContentProvider"
             android:authorities="tracksContentProvider" />
 
+        <service android:name=".MusicNotification.MusicNotificationService" />
+
+        <receiver
+            android:name=".AppWidget"
+            android:label="Recipes Ingredients">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget" />
+        </receiver>
+
         <activity
             android:name=".activities.MainActivity_"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -2,6 +2,7 @@ package com.memoseed.mozicaplayer.backgroundTasks;
 
 import android.os.AsyncTask;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,8 +29,19 @@ public class GetMBID extends AsyncTask<String, String, JSONObject > {
 
         @Override
         protected void onPostExecute(JSONObject json) {
-
-            new GetCover().execute(mbid);
+            String id = "";
+            try {
+                JSONArray recordings = json.getJSONArray("recordings");
+                if(recordings.length()>0) {
+                    JSONArray releases = recordings.getJSONObject(0).getJSONArray("releases");
+                    if(releases.length()>0) {
+                        id = releases.getJSONObject(0).getString("id");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            new GetCover().execute(id);
         }
 
 }

@@ -55,9 +55,10 @@
 
             <Button
                 android:id="@+id/btnPrev"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Button" />
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@drawable/exo_controls_previous"
+                android:backgroundTint="@android:color/black" />
 
             <CheckBox
                 android:id="@+id/checkPlay"
@@ -65,13 +66,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
-                android:checked="true" />
+                android:button="@drawable/check_play"
+                android:checked="true"
+                android:gravity="center"
+                app:buttonTint="@android:color/black" />
 
             <Button
                 android:id="@+id/btnNext"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Button" />
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@drawable/exo_controls_next"
+                android:backgroundTint="@android:color/black" />
         </LinearLayout>
 
         <LinearLayout

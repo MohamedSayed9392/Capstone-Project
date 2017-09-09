@@ -6,13 +6,16 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.memoseed.mozicaplayer.AppParameters;
 import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.adapters.LibraryPagerAdapter;
 import com.memoseed.mozicaplayer.database.DatabaseHandler;
@@ -20,6 +23,7 @@ import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.debugSystem.ExceptionHandler;
 import com.memoseed.mozicaplayer.fragments.TracksFragment_;
 import com.memoseed.mozicaplayer.model.Track;
+import com.memoseed.mozicaplayer.model.TrackAlbumArt;
 import com.memoseed.mozicaplayer.model.TrackListened;
 import com.memoseed.mozicaplayer.utils.Music;
 
@@ -39,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     public LibraryPagerAdapter libraryPagerAdapter;
     String TAG = getClass().getSimpleName();
 
+    AppParameters p;
+
     static MainActivity mainActivity;
     public static MainActivity getInstance() {
         return mainActivity;
@@ -49,10 +55,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this));
+        p = new AppParameters(this);
 
         mainActivity = this;
         getSongList();
         libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(),2);
+
+        descending = p.getBoolean("default_sort_descending",false);
+
     }
 
     @Override
@@ -68,24 +78,46 @@ public class MainActivity extends AppCompatActivity {
             if (oldOptionItemSelectedid == R.id.sort_listened) {
                 if(!descending){
                     Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
                 }else{
                     Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w2.getListened()).compareTo(w1.getListened()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w2.getListened()).compareTo(w1.getListened()));
                 }
 
-                ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
-                for(int i=0;i<Music.allTracks.size();i++){
-                    Track track1 = Music.allTracks.get(i);
-                    if(track1.getId() == Music.currentTrack.getId()){
-                        ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
-                        break;
+                notifyAllTabsDataChanged();
+                if(Music.currentTrack!=null) {
+                    for(int i=0;i<Music.allTracks.size();i++){
+                        Track track1 = Music.allTracks.get(i);
+                        if(track1.getId() == Music.currentTrack.getId()){
+                            ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
+                            break;
+                        }
+                    }
+                    for(int i=0;i<Music.favTracks.size();i++){
+                        Track track1 = Music.favTracks.get(i);
+                        if(track1.getId() == Music.currentTrack.getId()){
+                            ((TracksFragment_)libraryPagerAdapter.getItem(1)).rView.scrollToPosition(i);
+                            break;
+                        }
                     }
                 }
             }else{
-                for(int i=0;i<Music.allTracks.size();i++){
-                    Track track1 = Music.allTracks.get(i);
-                    if(track1.getId() == Music.currentTrack.getId()){
-                        ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
-                        break;
+                if(Music.currentTrack!=null) {
+                    for(int i=0;i<Music.allTracks.size();i++){
+                        Track track1 = Music.allTracks.get(i);
+                        if(track1.getId() == Music.currentTrack.getId()){
+                            ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+                            ((TracksFragment_)libraryPagerAdapter.getItem(0)).rView.scrollToPosition(i);
+                            break;
+                        }
+                    }
+                    for(int i=0;i<Music.favTracks.size();i++){
+                        Track track1 = Music.favTracks.get(i);
+                        if(track1.getId() == Music.currentTrack.getId()){
+                            ((TracksFragment_)libraryPagerAdapter.getItem(1)).libraryRVAdapter.notifyDataSetChanged();
+                            ((TracksFragment_)libraryPagerAdapter.getItem(1)).rView.scrollToPosition(i);
+                            break;
+                        }
                     }
                 }
             }
@@ -96,10 +128,19 @@ public class MainActivity extends AppCompatActivity {
 
     @ViewById
     ViewPager viewPager;
+    @ViewById
+    TabLayout tabLayout;
+
+    @ViewById
+    Toolbar toolbar;
 
     @AfterViews
     void afterViews(){
+        setSupportActionBar(toolbar);
         viewPager.setAdapter(libraryPagerAdapter);
+        tabLayout.setupWithViewPager(viewPager);
+        tabLayout.getTabAt(0).setText(R.string.all);
+        tabLayout.getTabAt(1).setText(R.string.favourites);
     }
     
     public void getSongList() {
@@ -114,8 +155,8 @@ public class MainActivity extends AppCompatActivity {
 
         if(musicCursor!=null && musicCursor.moveToFirst()){
             //get columns
-            int titleColumn = musicCursor.getColumnIndex(android.provider.MediaStore.Audio.Media.TITLE);
-            int artistColumn = musicCursor.getColumnIndex(android.provider.MediaStore.Audio.Media.ARTIST);
+            int titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
+            int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int fileNameColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
             int filePathColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
       /*      int albumArtColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
@@ -123,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
             int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             int addedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED);
+
             //add songs to list
             do {
                 String thisTitle = musicCursor.getString(titleColumn);
@@ -135,14 +177,14 @@ public class MainActivity extends AppCompatActivity {
                 long duration = musicCursor.getLong(durationColumn);
                 long added = musicCursor.getLong(addedColumn);
 
-                Music.allTracks.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added,false));
+                if(!thisFilePath.contains("ACRCalls")) Music.allTracks.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added,false));
             }
             while (musicCursor.moveToNext());
         }
 
         getAllTrackListeneds();
-        getFavTrackListeneds();
-
+        getAllTracksAlbumArts();
+        getFavTracks();
     }
 
     @Background
@@ -178,7 +220,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Background
-    public void getFavTrackListeneds() {
+    public void getAllTracksAlbumArts() {
+        Log.d(TAG,"getAllTracksAlbumArts start");
+        Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_ALBUM_ART_TRACKS);
+        Cursor cursor = getContentResolver().query(contentUri,null, null, null,null);
+
+        List<TrackAlbumArt> trackAlbumArtsList = new ArrayList<TrackAlbumArt>();
+        // looping through all rows and adding to listTrackAlbumArt
+        if (cursor.moveToFirst()) {
+            do {
+                int KEY_ID = cursor.getColumnIndex("id");
+                int KEY_ALBUM_ART = cursor.getColumnIndex("albumArt");
+
+                TrackAlbumArt trackAlbumArt = new TrackAlbumArt(cursor.getLong(KEY_ID), cursor.getString(KEY_ALBUM_ART));
+                Log.d(TAG,trackAlbumArt.getId() +" - "+trackAlbumArt.getAlbumArt());
+                // Adding trackListened to list
+                trackAlbumArtsList.add(trackAlbumArt);
+            } while (cursor.moveToNext());
+        }
+
+        for(int i=0;i<trackAlbumArtsList.size();i++){
+            TrackAlbumArt trackAlbumArt = trackAlbumArtsList.get(i);
+            for(int j=0;j<Music.allTracks.size();j++){
+                Track track = Music.allTracks.get(j);
+                if(track.getId()==trackAlbumArt.getId()){
+                    track.setAlbumArt(trackAlbumArt.getAlbumArt());
+                    break;
+                }
+            }
+        }
+        Log.d(TAG,"getAllTracksAlbumArts end");
+    }
+
+    @Background
+    public void getFavTracks() {
         Log.d(TAG,"getAllTrackFav start");
         Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_FAV_TRACKS);
         Cursor cursor = getContentResolver().query(contentUri,null, null, null,null);
@@ -221,90 +296,137 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
         Log.d(TAG,item.getTitle().toString());
+        if(!sortTracks(id)) return super.onOptionsItemSelected(item);
+        else return true;
+    }
+
+    public boolean sortTracks(int id){
+        Log.d(TAG,"sort allTracks size : "+Music.allTracks.size());
+        Log.d(TAG,"sort favTracks size : "+Music.favTracks.size());
         switch (id) {
-            case R.id.sort_file_name:
+            case R.id.sort_file_name:Log.d(TAG,"sort 0");
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
                     Collections.sort(Music.allTracks, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
                 }else{
                     if(descending){
                         descending = false;
                         Collections.sort(Music.allTracks, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
+                        Collections.sort(Music.favTracks, (w1, w2) -> w1.getFileName().compareTo(w2.getFileName()));
                     }else{
                         descending = true;
                         Collections.reverse(Music.allTracks);
+                        Collections.reverse(Music.favTracks);
                     }
                 }
-                ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+                p.setInt(id,"default_sort");
+                p.setBoolean(descending,"default_sort_descending");
+                notifyAllTabsDataChanged();
                 return true;
-            case R.id.sort_title:
+            case R.id.sort_title:Log.d(TAG,"sort 1");
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
                     Collections.sort(Music.allTracks, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
                 }else{
                     if(descending){
                         descending = false;
                         Collections.sort(Music.allTracks, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
+                        Collections.sort(Music.favTracks, (w1, w2) -> w1.getTitle().compareTo(w2.getTitle()));
                     }else{
                         descending = true;
                         Collections.reverse(Music.allTracks);
+                        Collections.reverse(Music.favTracks);
                     }
                 }
-                ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+                p.setInt(id,"default_sort");
+                p.setBoolean(descending,"default_sort_descending");
+                notifyAllTabsDataChanged();
                 return true;
-            case R.id.sort_duration:
+            case R.id.sort_duration:Log.d(TAG,"sort 2");
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
                     Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
                 }else{
                     if(descending){
                         descending = false;
                         Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
+                        Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getDuration()).compareTo(w2.getDuration()));
                     }else{
                         descending = true;
                         Collections.reverse(Music.allTracks);
+                        Collections.reverse(Music.favTracks);
                     }
                 }
-                ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+                p.setInt(id,"default_sort");
+                p.setBoolean(descending,"default_sort_descending");
+                notifyAllTabsDataChanged();
                 return true;
-            case R.id.sort_added:
+            case R.id.sort_added:Log.d(TAG,"sort 3");
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
                     Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
                 }else{
                     if(descending){
                         descending = false;
                         Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
+                        Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getAdded()).compareTo(w2.getAdded()));
                     }else{
                         descending = true;
                         Collections.reverse(Music.allTracks);
+                        Collections.reverse(Music.favTracks);
                     }
                 }
-                ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+                p.setInt(id,"default_sort");
+                p.setBoolean(descending,"default_sort_descending");
+                notifyAllTabsDataChanged();
                 return true;
-            case R.id.sort_listened:
+            case R.id.sort_listened:Log.d(TAG,"sort 4");
 
                 if(oldOptionItemSelectedid!=id) {
                     oldOptionItemSelectedid = id;
                     Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
+                    Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
                 }else{
                     if(descending){
                         descending = false;
                         Collections.sort(Music.allTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
+                        Collections.sort(Music.favTracks, (w1, w2) -> ((Long)w1.getListened()).compareTo(w2.getListened()));
                     }else{
                         descending = true;
                         Collections.reverse(Music.allTracks);
+                        Collections.reverse(Music.favTracks);
                     }
                 }
-                ((TracksFragment_)libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+                p.setInt(id,"default_sort");
+                p.setBoolean(descending,"default_sort_descending");
+                notifyAllTabsDataChanged();
                 return true;
-            default:
-                return super.onOptionsItemSelected(item);
+                default:Log.d(TAG,"sort 5");
+                    return false;
         }
     }
 
     public void scrollToPosition(int position,int currentTab){
         Log.d(TAG,"scrollToPosition("+position+","+currentTab+")");
-        ((TracksFragment_) libraryPagerAdapter.getItem(currentTab)).rView.scrollToPosition(position);
+        try {
+            ((TracksFragment_) libraryPagerAdapter.getItem(currentTab)).rView.scrollToPosition(position);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    
+    public void notifyAllTabsDataChanged(){
+        try {
+            ((TracksFragment_) libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
+            scrollToPosition(0, 0);
+            ((TracksFragment_) libraryPagerAdapter.getItem(1)).libraryRVAdapter.notifyDataSetChanged();
+            scrollToPosition(0, 1);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

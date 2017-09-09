@@ -2,6 +2,8 @@ package com.memoseed.mozicaplayer.utils;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -14,6 +16,7 @@ import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
+import com.memoseed.mozicaplayer.AppWidget;
 import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.model.Track;
@@ -135,6 +138,16 @@ public class UTils {
             e.printStackTrace();
         }
         return albumArt;
+    }
+
+    public static void updateWidget(Context context) {
+
+        AppWidgetManager man = AppWidgetManager.getInstance(context);
+        int[] ids = man.getAppWidgetIds(new ComponentName(context, AppWidget.class));
+        Intent updateIntent = new Intent();
+        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        updateIntent.putExtra(AppWidget.WIDGET_IDS_KEY, ids);
+        context.sendBroadcast(updateIntent);
     }
 
 }

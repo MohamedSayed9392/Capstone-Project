@@ -5,8 +5,10 @@ package com.memoseed.mozicaplayer.fragments;
  */
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,10 +54,15 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.memoseed.mozicaplayer.MusicNotification.MusicNotificationConstants;
+import com.memoseed.mozicaplayer.MusicNotification.MusicNotificationService;
 import com.memoseed.mozicaplayer.R;
 import com.memoseed.mozicaplayer.activities.MainActivity;
 import com.memoseed.mozicaplayer.activities.MainActivity_;
+import com.memoseed.mozicaplayer.activities.PlayerActivity;
+import com.memoseed.mozicaplayer.activities.PlayerActivity_;
 import com.memoseed.mozicaplayer.adapters.LibraryRVAdapter;
+import com.memoseed.mozicaplayer.backgroundTasks.GetMBID;
 import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.model.Track;
@@ -157,6 +164,10 @@ public class PlayerFragment extends Fragment {
 
     @AfterViews
     void afterViews() {
+        updateUi();
+    }
+
+    private void updateUi(){
         txtTitle.setText(Music.currentTrack.getTitle());
         txtCurrent.setText(new SimpleDateFormat("mm:ss").format(new Date(Music.currentTrack.getCurrentTime())));
         txtEnd.setText(new SimpleDateFormat("mm:ss").format(new Date(Music.currentTrack.getDuration())));
@@ -195,27 +206,46 @@ public class PlayerFragment extends Fragment {
             Music.playTrack(mContext,Music.currentTrack.getFilePath());
         }else{
             checkPlay.setChecked(Music.exoPlayer.getPlayWhenReady());
-            if(Music.exoPlayer.getPlayWhenReady())  updateTrackTimeHandler.post(updateTrackTimeRunnable);
+            if(Music.exoPlayer.getPlayWhenReady()) {
+                updateTrackTimeHandler.post(updateTrackTimeRunnable);
+                if(Music.currentTrack.getAlbumArt().isEmpty()) {
+                    Log.d(TAG,"updateCoverArt - 0 - empty");
+                    StringBuilder sb = new StringBuilder();
+                    try {
+                        sb.append(Music.currentTrack.getTitle());
+                        sb.append(" ");
+                        sb.append(Music.currentTrack.getArtist());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        sb.append(Music.currentTrack.getFileName());
+                    }
+                    new GetMBID().execute("http://musicbrainz.org/ws/2/recording/?fmt=json&query=" + sb.toString());
+                }else{
+                    Log.d(TAG,"updateCoverArt - 1 - "+Music.currentTrack.getAlbumArt());
+                    updateCoverArt(Music.currentTrack.getAlbumArt());
+                }
+            }
         }
 
         Music.exoPlayer.addListener(new Player.EventListener() {
             @Override
             public void onTimelineChanged(Timeline timeline, Object manifest) {
-
+                Log.d(TAG,"exo - onTimelineChanged");
             }
 
             @Override
             public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
+                Log.d(TAG,"exo - onTracksChanged");
             }
 
             @Override
             public void onLoadingChanged(boolean isLoading) {
-
+                Log.d(TAG,"exo - onLoadingChanged : "+isLoading);
             }
 
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                Log.d(TAG,"exo - onPlayerStateChanged : "+playWhenReady);
                 if(playWhenReady){
                     updateTrackTimeHandler.post(updateTrackTimeRunnable);
                 }else{
@@ -231,12 +261,12 @@ public class PlayerFragment extends Fragment {
 
             @Override
             public void onRepeatModeChanged(int repeatMode) {
-
+                Log.d(TAG,"exo - onRepeatModeChanged : "+repeatMode);
             }
 
             @Override
             public void onPlayerError(ExoPlaybackException error) {
-
+                error.printStackTrace();
             }
 
             @Override
@@ -249,14 +279,17 @@ public class PlayerFragment extends Fragment {
 
             }
         });
-
-
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
+        try{
+            updateUi();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -292,6 +325,30 @@ public class PlayerFragment extends Fragment {
             }
         }
 
+        Music.currentTrack = track;
+
+        if(!checkPlay.isChecked()) {
+            updateTrackTimeHandler.post(updateTrackTimeRunnable);
+        }
+
+        progressBar.setVisibility(View.VISIBLE);
+        if(Music.currentTrack.getAlbumArt().isEmpty()) {
+            Log.d(TAG,"updateCoverArt - 0 - empty");
+            StringBuilder sb = new StringBuilder();
+            try {
+                sb.append(Music.currentTrack.getTitle());
+                sb.append(" ");
+                sb.append(Music.currentTrack.getArtist());
+            } catch (Exception e) {
+                e.printStackTrace();
+                sb.append(Music.currentTrack.getFileName());
+            }
+            new GetMBID().execute("http://musicbrainz.org/ws/2/recording/?fmt=json&query=" + sb.toString());
+        }else{
+            Log.d(TAG,"updateCoverArt - 1 - "+Music.currentTrack.getAlbumArt());
+            updateCoverArt(Music.currentTrack.getAlbumArt());
+        }
+
         playTrack(track);
     }
 
@@ -322,12 +379,46 @@ public class PlayerFragment extends Fragment {
             }
         }
 
+        Music.currentTrack = track;
+
+        if(!checkPlay.isChecked()) {
+            updateTrackTimeHandler.post(updateTrackTimeRunnable);
+        }
+
+        progressBar.setVisibility(View.VISIBLE);
+        if(Music.currentTrack.getAlbumArt().isEmpty()) {
+            Log.d(TAG,"updateCoverArt - 0 - empty");
+            StringBuilder sb = new StringBuilder();
+            try {
+                sb.append(Music.currentTrack.getTitle());
+                sb.append(" ");
+                sb.append(Music.currentTrack.getArtist());
+            } catch (Exception e) {
+                e.printStackTrace();
+                sb.append(Music.currentTrack.getFileName());
+            }
+            new GetMBID().execute("http://musicbrainz.org/ws/2/recording/?fmt=json&query=" + sb.toString());
+        }else{
+            Log.d(TAG,"updateCoverArt - 1 - "+Music.currentTrack.getAlbumArt());
+            updateCoverArt(Music.currentTrack.getAlbumArt());
+        }
+
         playTrack(track);
     }
     private void playTrack(Track track){
         Log.d(TAG,"listened : "+track.getListened());
 
         track.setListened(track.getListened()+1);
+        for(int i=0;i<Music.allTracks.size();i++){
+            if(Music.allTracks.get(i).getId()==track.getId()){
+                Music.allTracks.get(i).setListened(track.getListened());
+            }
+        }
+        for(int i=0;i<Music.favTracks.size();i++){
+            if(Music.favTracks.get(i).getId()==track.getId()){
+                Music.favTracks.get(i).setListened(track.getListened());
+            }
+        }
 
         ContentValues values = new ContentValues();
         values.put("listened", track.getListened());
@@ -351,28 +442,83 @@ public class PlayerFragment extends Fragment {
         txtEnd.setText(new SimpleDateFormat("mm:ss").format(new Date(Music.currentTrack.getDuration())));
         seekBar.setMax((int)Music.currentTrack.getDuration());
         seekBar.setProgress((int)Music.currentTrack.getCurrentTime());
+        if(Music.currentTrack.getAlbumArt().isEmpty()) {
+            Log.d(TAG,"updateCoverArt - 0 - empty");
+            StringBuilder sb = new StringBuilder();
+            try {
+                sb.append(Music.currentTrack.getTitle());
+                sb.append(" ");
+                sb.append(Music.currentTrack.getArtist());
+            } catch (Exception e) {
+                e.printStackTrace();
+                sb.append(Music.currentTrack.getFileName());
+            }
+            new GetMBID().execute("http://musicbrainz.org/ws/2/recording/?fmt=json&query=" + sb.toString());
+        }else{
+            Log.d(TAG,"updateCoverArt - 1 - "+Music.currentTrack.getAlbumArt());
+            updateCoverArt(Music.currentTrack.getAlbumArt());
+        }
 
         ((TracksFragment_)MainActivity.getInstance().libraryPagerAdapter.getItem(0)).libraryRVAdapter.notifyDataSetChanged();
 
+        if(isMyServiceRunning(MusicNotificationService.class)){
+            mContext.stopService(new Intent(mContext, MusicNotificationService.class));
+            mContext.startService(new Intent(mContext, MusicNotificationService.class).setAction(MusicNotificationConstants.ACTION.PLAY_ACTION));
+        }
         Music.playTrack(mContext,Music.currentTrack.getFilePath());
 
         checkPlay.setChecked(true);
     }
 
     public void updateCoverArt(String imageUrl){
+        Log.d(TAG,"updateCoverArt - 2 - "+imageUrl);
+        if(Music.currentTrack.getAlbumArt().isEmpty()&&!imageUrl.isEmpty()){
+            Music.currentTrack.setAlbumArt(imageUrl);
+            for(int i=0;i<Music.allTracks.size();i++){
+                if(Music.allTracks.get(i).getId()==Music.currentTrack.getId()){
+                    Music.allTracks.get(i).setAlbumArt(imageUrl);
+                }
+            }
+            for(int i=0;i<Music.favTracks.size();i++){
+                if(Music.favTracks.get(i).getId()==Music.currentTrack.getId()){
+                    Music.favTracks.get(i).setAlbumArt(imageUrl);
+                }
+            }
+
+            ContentValues values = new ContentValues();
+            values.put("albumArt", imageUrl);
+
+            Uri contentUri = Uri.withAppendedPath(TracksContentProvider.CONTENT_URI, DatabaseHandler.TABLE_ALBUM_ART_TRACKS);
+            values.put("id", Music.currentTrack.getId());
+            mContext.getContentResolver().insert(contentUri, values);
+        }
+
         Glide.with(mContext).load(imageUrl).listener(new RequestListener<String, GlideDrawable>() {
             @Override
             public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
                 progressBar.setVisibility(View.GONE);
+                Log.d(TAG,"updateCoverArt - 3 - "+imageUrl);
+                e.printStackTrace();
                 return false;
             }
 
             @Override
             public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
                 progressBar.setVisibility(View.GONE);
+                Log.d(TAG,"updateCoverArt - 4 - "+imageUrl);
                 return false;
             }
-        }).into(imAlbumArt);
+        }).error(R.drawable.track_album_art).into(imAlbumArt);
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void toast(String s) {
