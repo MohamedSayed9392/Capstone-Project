@@ -3,18 +3,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/sort_title"
-        android:title="by Title"
+        android:title="@string/by_title"
         android:icon="@drawable/track_album_art"/>
     <item
         android:id="@+id/sort_file_name"
-        android:title="by File name" />
+        android:title="@string/by_file_name" />
     <item
         android:id="@+id/sort_duration"
-        android:title="by Duration" />
+        android:title="@string/by_duration" />
     <item
         android:id="@+id/sort_listened"
-        android:title="by listened" />
+        android:title="@string/by_listened" />
     <item
         android:id="@+id/sort_added"
-        android:title="by Date added" />
+        android:title="@string/by_date_added" />
 </menu>

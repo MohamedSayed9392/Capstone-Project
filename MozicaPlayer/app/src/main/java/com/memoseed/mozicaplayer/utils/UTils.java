@@ -1,11 +1,14 @@
 package com.memoseed.mozicaplayer.utils;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -13,10 +16,12 @@ import android.database.sqlite.SQLiteException;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
 import com.memoseed.mozicaplayer.AppWidget;
+import com.memoseed.mozicaplayer.activities.MainActivity;
 import com.memoseed.mozicaplayer.database.DatabaseHandler;
 import com.memoseed.mozicaplayer.database.TracksContentProvider;
 import com.memoseed.mozicaplayer.model.Track;
@@ -149,5 +154,34 @@ public class UTils {
         updateIntent.putExtra(AppWidget.WIDGET_IDS_KEY, ids);
         context.sendBroadcast(updateIntent);
     }
+    public static boolean permissionCheck(Activity activity, String permission) {
+        if (ActivityCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
+    public static boolean permissionCheckContext(Context context, String permission) {
+        if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static void permissionGrant(Activity activity, String permission, int permissionCode) {
+        ActivityCompat.requestPermissions(activity, new String[]{permission}, permissionCode);
+    }
+
+
+    public static void show2OptionsDialoge(Activity activity, String msg, DialogInterface.OnClickListener listenerPos, DialogInterface.OnClickListener listenerNeg, String txtbtnP, String txtbtnN) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setMessage(msg)
+                .setCancelable(false)
+                .setPositiveButton(txtbtnP, listenerPos)
+                .setNegativeButton(txtbtnN, listenerNeg);
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
 }

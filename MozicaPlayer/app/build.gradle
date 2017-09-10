@@ -16,8 +16,19 @@ android {
         resConfigs "en", "ar"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
+    signingConfigs {
+        release {
+            keyAlias 'key0'
+            keyPassword 'm12345678m'
+            storeFile file('../release_keystore.jks')
+            storePassword 'm12345678m'
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->

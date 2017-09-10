@@ -15,7 +15,8 @@
             android:layout_width="@dimen/status_bar_album_art"
             android:layout_height="@dimen/status_bar_album_art"
             android:gravity="center"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:contentDescription="@string/track_album_art" />
 
         <ImageView
             android:id="@+id/status_bar_icon"
@@ -24,7 +25,8 @@
             android:background="@drawable/music_player_notification_bg"
             android:scaleType="center"
             android:src="@mipmap/ic_launcher"
-            android:visibility="visible" />
+            android:visibility="visible"
+            android:contentDescription="@string/app_icon"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -80,7 +82,8 @@
                 android:background="?android:selectableItemBackground"
                 android:padding="2dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/apollo_holo_dark_prev" />
+                android:src="@drawable/apollo_holo_dark_prev"
+                android:contentDescription="@string/previous"/>
 
             <ImageButton
                 android:id="@+id/status_bar_play"
@@ -90,7 +93,8 @@
                 android:background="?android:selectableItemBackground"
                 android:padding="2dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/apollo_holo_dark_play" />
+                android:src="@drawable/apollo_holo_dark_play"
+                android:contentDescription="@string/play"/>
 
             <ImageButton
                 android:id="@+id/status_bar_next"
@@ -100,7 +104,8 @@
                 android:background="?android:selectableItemBackground"
                 android:padding="2dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/apollo_holo_dark_next" />
+                android:src="@drawable/apollo_holo_dark_next"
+                android:contentDescription="@string/next"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -114,7 +119,7 @@
         android:layout_alignTop="@+id/linItem"
         android:background="@android:color/darker_gray"
         android:gravity="center"
-        android:text="Play a track from Mozica first"
+        android:text="@string/play_a_track_from_mozica_first"
         android:textColor="@android:color/white"
         android:visibility="gone" />
 </RelativeLayout>

@@ -5,4 +5,21 @@
     <string name="added">Added</string>
     <string name="all">All</string>
     <string name="favourites">Favourites</string>
+    <string name="need_storage_permission">Mozica Player need STorage read permission to get music files</string>
+    <string name="try_again">try again</string>
+    <string name="cancel">cancel</string>
+    <string name="time_0">00:00</string>
+    <string name="by_title">by Title</string>
+    <string name="by_file_name">by File name</string>
+    <string name="by_duration">by Duration</string>
+    <string name="by_listened">by listened</string>
+    <string name="by_date_added">by Date added</string>
+    <string name="play_a_track_from_mozica_first">Play a track from Mozica first</string>
+    <string name="track_album_art">track album art</string>
+    <string name="track_now_playing">track now playing</string>
+    <string name="line_divider">line divider</string>
+    <string name="app_icon">app icon</string>
+    <string name="previous">previous</string>
+    <string name="play">play</string>
+    <string name="next">next</string>
 </resources>

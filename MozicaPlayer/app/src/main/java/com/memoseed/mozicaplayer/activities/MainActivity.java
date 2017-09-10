@@ -1,9 +1,13 @@
 package com.memoseed.mozicaplayer.activities;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.design.widget.TabLayout;
@@ -26,6 +30,7 @@ import com.memoseed.mozicaplayer.model.Track;
 import com.memoseed.mozicaplayer.model.TrackAlbumArt;
 import com.memoseed.mozicaplayer.model.TrackListened;
 import com.memoseed.mozicaplayer.utils.Music;
+import com.memoseed.mozicaplayer.utils.UTils;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Background;
@@ -58,11 +63,51 @@ public class MainActivity extends AppCompatActivity {
         p = new AppParameters(this);
 
         mainActivity = this;
-        getSongList();
-        libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(),2);
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (UTils.permissionCheck(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) &&
+                    UTils.permissionCheck(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                getSongList();
+                libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
+                descending = p.getBoolean("default_sort_descending", false);
+            } else {
+                UTils.permissionGrant(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, 0);
+            }
+        }else{
+            getSongList();
+            libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
+            descending = p.getBoolean("default_sort_descending", false);
+        }
 
-        descending = p.getBoolean("default_sort_descending",false);
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case 0: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getSongList();
+                    libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
+                    descending = p.getBoolean("default_sort_descending", false);
+                } else {
+                    UTils.show2OptionsDialoge(this, getString(R.string.need_storage_permission), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            UTils.permissionGrant(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE, 0);
+                        }
+                    }, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    }, getString(R.string.try_again),getString(R.string.cancel));
+                    // Toast.makeText(this, R.string.needPermission, Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+        }
     }
 
     @Override
