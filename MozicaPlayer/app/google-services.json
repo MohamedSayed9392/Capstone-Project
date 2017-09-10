@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "886204519049",
+    "firebase_url": "https://mozica-player.firebaseio.com",
+    "project_id": "mozica-player",
+    "storage_bucket": "mozica-player.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:886204519049:android:f12606db8eb5867a",
+        "android_client_info": {
+          "package_name": "com.memoseed.mozicaplayer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "886204519049-9ibt63p26qtje5dnfal74pvtrb5fs2is.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8lCYL-GRIgF6kbHikx6yIkjHwxOKrHUI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
