@@ -1,9 +1,12 @@
 package com.memoseed.mozicaplayer.activities;
 
 import android.Manifest;
+import android.app.LoaderManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.DialogInterface;
+import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -18,6 +21,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.memoseed.mozicaplayer.AppParameters;
 import com.memoseed.mozicaplayer.R;
@@ -43,7 +47,7 @@ import java.util.Collections;
 import java.util.List;
 
 @EActivity(R.layout.activity_main)
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public LibraryPagerAdapter libraryPagerAdapter;
     String TAG = getClass().getSimpleName();
@@ -67,15 +71,11 @@ public class MainActivity extends AppCompatActivity {
             if (UTils.permissionCheck(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) &&
                     UTils.permissionCheck(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 getSongList();
-                libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
-                descending = p.getBoolean("default_sort_descending", false);
             } else {
                 UTils.permissionGrant(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, 0);
             }
         }else{
             getSongList();
-            libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
-            descending = p.getBoolean("default_sort_descending", false);
         }
 
     }
@@ -88,8 +88,6 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     getSongList();
-                    libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
-                    descending = p.getBoolean("default_sort_descending", false);
                 } else {
                     UTils.show2OptionsDialoge(this, getString(R.string.need_storage_permission), new DialogInterface.OnClickListener() {
                         @Override
@@ -102,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                             dialog.dismiss();
                         }
                     }, getString(R.string.try_again),getString(R.string.cancel));
-                    // Toast.makeText(this, R.string.needPermission, Toast.LENGTH_SHORT).show();
+               //    Toast.makeText(this, R.string.need_storage_permission, Toast.LENGTH_SHORT).show();
                 }
                 return;
             }
@@ -192,44 +190,9 @@ public class MainActivity extends AppCompatActivity {
 
         Music.allTracks.clear();
         Music.favTracks.clear();
+        getLoaderManager().initLoader(0, null, this);
 
-        //retrieve song info
-        ContentResolver musicResolver = getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
 
-        if(musicCursor!=null && musicCursor.moveToFirst()){
-            //get columns
-            int titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
-            int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
-            int fileNameColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
-            int filePathColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-      /*      int albumArtColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-            int listenedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);*/
-            int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
-            int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-            int addedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED);
-
-            //add songs to list
-            do {
-                String thisTitle = musicCursor.getString(titleColumn);
-                String thisArtist = musicCursor.getString(artistColumn);
-                String thisFileName = musicCursor.getString(fileNameColumn);
-                String thisFilePath = "file:///"+musicCursor.getString(filePathColumn);
-               /* String thisAlbumArt = musicCursor.getString(fileNameColumn);
-                long listened = musicCursor.getLong(fileNameColumn);*/
-                long id = musicCursor.getLong(idColumn); //  Log.d(TAG,"track_id : "+id);
-                long duration = musicCursor.getLong(durationColumn);
-                long added = musicCursor.getLong(addedColumn);
-
-                if(!thisFilePath.contains("ACRCalls")) Music.allTracks.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added,false));
-            }
-            while (musicCursor.moveToNext());
-        }
-
-        getAllTrackListeneds();
-        getAllTracksAlbumArts();
-        getFavTracks();
     }
 
     @Background
@@ -324,9 +287,21 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        Log.d(TAG,"getAllTrackFav : all : "+Music.allTracks.size());
+        Log.d(TAG,"getAllTrackFav : fav : "+Music.favTracks.size());
+        updateUi();
         Log.d(TAG,"getAllTrackFav end");
     }
 
+    @UiThread
+    public void updateUi(){
+        descending = p.getBoolean("default_sort_descending", false);
+        libraryPagerAdapter = new LibraryPagerAdapter(getSupportFragmentManager(), 2);
+        viewPager.setAdapter(libraryPagerAdapter);
+        tabLayout.setupWithViewPager(viewPager);
+        tabLayout.getTabAt(0).setText(R.string.all);
+        tabLayout.getTabAt(1).setText(R.string.favourites);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -473,5 +448,61 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Loader onCreateLoader(int i, Bundle bundle) {
+        //retrieve song info
+        ContentResolver musicResolver = getContentResolver();
+        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        CursorLoader cursorLoader = new CursorLoader(this, musicUri, null, null, null, null);
+
+        return cursorLoader;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor musicCursor) {
+        Log.d(TAG,"onLoadFinished");
+        if(musicCursor!=null && musicCursor.moveToFirst()){
+            Log.d(TAG,"onLoadFinished0");
+            //get columns
+            int titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
+            int artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+            int fileNameColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME);
+            int filePathColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+      /*      int albumArtColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            int listenedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA);*/
+            int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
+            int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
+            int addedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED);
+
+            //add songs to list
+            do {
+                String thisTitle = musicCursor.getString(titleColumn);
+                String thisArtist = musicCursor.getString(artistColumn);
+                String thisFileName = musicCursor.getString(fileNameColumn);
+                String thisFilePath = "file:///"+musicCursor.getString(filePathColumn);
+               /* String thisAlbumArt = musicCursor.getString(fileNameColumn);
+                long listened = musicCursor.getLong(fileNameColumn);*/
+                long id = musicCursor.getLong(idColumn); //  Log.d(TAG,"track_id : "+id);
+                long duration = musicCursor.getLong(durationColumn);
+                long added = musicCursor.getLong(addedColumn);
+
+                if(!thisFilePath.contains("ACRCalls")) Music.allTracks.add(new Track(thisTitle,thisFileName,thisFilePath,"", thisArtist,id,0,duration,added,false));
+            }
+            while (musicCursor.moveToNext());
+        }else{
+            Log.d(TAG,"onLoadFinished1");
+        }
+
+        Log.d(TAG,"onLoadFinished2 : "+Music.allTracks.size());
+        getAllTrackListeneds();
+        getAllTracksAlbumArts();
+        getFavTracks();
+    }
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+
     }
 }

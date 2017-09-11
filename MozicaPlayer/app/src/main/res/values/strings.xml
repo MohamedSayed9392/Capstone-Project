@@ -5,7 +5,7 @@
     <string name="added">Added</string>
     <string name="all">All</string>
     <string name="favourites">Favourites</string>
-    <string name="need_storage_permission">Mozica Player need STorage read permission to get music files</string>
+    <string name="need_storage_permission">Mozica Player need Storage read permission to get music files</string>
     <string name="try_again">try again</string>
     <string name="cancel">cancel</string>
     <string name="time_0">00:00</string>
